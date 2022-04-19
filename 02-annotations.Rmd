@@ -15,9 +15,6 @@ library(tidyverse)
 library(here)
 library(WDI) # Get data from the World Bank
 library(ggrepel) # For non-overlapping labels
-
-# You need to install ggtext from GitHub. Follow the instructions at
-# https://github.com/wilkelab/ggtext
 library(ggtext) # For fancier text handling
 ```
 
