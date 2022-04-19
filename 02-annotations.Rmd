@@ -1,0 +1,132 @@
+---
+title: "Creating custom annotations"
+output: html_document
+---
+
+```{r opts}
+knitr::opts_chunk$set(
+  fig.width = 8, fig.asp = 0.618,
+  fig.retina = 2, dpi = 150
+)
+```
+
+```{r packages}
+library(tidyverse)
+library(here)
+library(WDI) # Get data from the World Bank
+library(ggrepel) # For non-overlapping labels
+
+# You need to install ggtext from GitHub. Follow the instructions at
+# https://github.com/wilkelab/ggtext
+library(ggtext) # For fancier text handling
+```
+
+## Annotations
+
+For this example, we're again going to use cross-national data from the [World Bank's Open Data portal](https://data.worldbank.org/). We'll download the data with the [**WDI** package](https://cran.r-project.org/web/packages/WDI/index.html).
+
+### Load data
+
+```{r get-wdi-fake, include = FALSE, eval = FALSE}
+indicators <- c(
+  "SP.POP.TOTL", # Population
+  "EN.ATM.CO2E.PC", # CO2 emissions
+  "NY.GDP.PCAP.KD"
+) # GDP per capita
+
+wdi_co2_raw <- WDI(
+  country = "all", indicators, extra = TRUE,
+  start = 1995, end = 2015
+)
+```
+
+```{r save-wdi, eval = FALSE, include = FALSE}
+write_csv(wdi_co2_raw, here::here("data", "wdi_co2.csv"))
+```
+
+```{r load-data-wdi-real}
+wdi_co2_raw <- read_csv(here("data", "wdi_co2.csv"))
+```
+
+Then we clean the data by removing non-country countries and renaming some of the columns.
+
+```{r clean-data-wdi}
+wdi_clean <- wdi_co2_raw %>%
+  filter(region != "Aggregates") %>%
+  select(iso2c, iso3c, country, year,
+    population = SP.POP.TOTL,
+    co2_emissions = EN.ATM.CO2E.PC,
+    gdp_per_cap = NY.GDP.PCAP.KD,
+    region, income
+  )
+```
+
+### Clean and reshape data
+
+Next we'll do some substantial filtering and reshaping so that we can end up with the rankings of CO~2~ emissions in 1995 and 2014. I annotate as much as possible below so you can see what's happening in each step.
+
+```{r rearrange-data}
+co2_rankings <- wdi_clean %>%
+  # Get rid of smaller countries
+  filter(population > 200000) %>%
+  # Only look at two years
+  filter(year %in% c(1995, 2014)) %>%
+  # Get rid of all the rows that have missing values in co2_emissions
+  drop_na(co2_emissions) %>%
+  # Look at each year individually and rank countries based on their emissions that year
+  group_by(year) %>%
+  mutate(ranking = rank(co2_emissions)) %>%
+  ungroup() %>%
+  # Only select a handful of columns, mostly just the newly created "ranking"
+  # column and some country identifiers
+  select(iso3c, country, year, region, income, ranking) %>%
+  # Right now the data is tidy and long, but we want to widen it and create
+  # separate columns for emissions in 1995 and in 2014. pivot_wider() will make
+  # new columns based on the existing "year" column (that's what `names_from`
+  # does), and it will add "rank_" as the prefix, so that the new columns will
+  # be "rank_1995" and "rank_2014". The values that go in those new columns will
+  # come from the existing "ranking" column
+  pivot_wider(names_from = year, names_prefix = "rank_", values_from = ranking) %>%
+  # Find the difference in ranking between 2014 and 1995
+  mutate(rank_diff = rank_2014 - rank_1995) %>%
+  # Remove all rows where there's a missing value in the rank_diff column
+  drop_na(rank_diff) %>%
+  # Make an indicator variable that is true of the absolute value of the
+  # difference in rankings is greater than 25. 25 is arbitrary here—that just
+  # felt like a big change in rankings
+  mutate(big_change = ifelse(abs(rank_diff) >= 25, TRUE, FALSE)) %>%
+  # Make another indicator variable that indicates if the rank improved by a
+  # lot, worsened by a lot, or didn't change much. We use the case_when()
+  # function, which is like a fancy version of ifelse() that takes multiple
+  # conditions. This is how it generally works:
+  #
+  # case_when(
+  #  some_test ~ value_if_true,
+  #  some_other_test ~ value_if_true,
+  #  TRUE ~ value_otherwise
+  # )
+  mutate(better_big_change = case_when(
+    rank_diff <= -25 ~ "Rank improved",
+    rank_diff >= 25 ~ "Rank worsened",
+    TRUE ~ "Rank changed a little"
+  ))
+```
+
+Here's what that reshaped data looked like before:
+
+```{r show-head-original}
+head(wdi_clean)
+```
+
+And here's what it looks like now:
+
+```{r show-head-new}
+head(co2_rankings)
+```
+
+### Plot the data and annotate
+
+```{r build-pretty-plot, fig.width=10, fig.height=6}
+
+
+```

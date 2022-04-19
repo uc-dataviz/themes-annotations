@@ -1,0 +1,49 @@
+---
+title: "Creating custom themes"
+output: html_document
+---
+
+```{r opts}
+knitr::opts_chunk$set(
+  fig.width = 8, fig.asp = 0.618,
+  fig.retina = 2, dpi = 150
+)
+```
+
+```{r packages}
+library(tidyverse)
+library(here)
+library(gapminder)  # For gapminder data
+library(colorspace) # For color scales
+library(scales)     # For improved labels
+```
+
+# Basic plot
+
+```{r basic-plot}
+gapminder_filtered <- gapminder %>% 
+  filter(year > 2000)
+
+base_plot <- ggplot(data = gapminder_filtered,
+                    mapping = aes(x = gdpPercap, y = lifeExp, 
+                                  color = continent, size = pop)) +
+  geom_point() +
+  # Use dollars, and get rid of the cents part (i.e. $300 instead of $300.00)
+  scale_x_log10(labels = dollar_format(accuracy = 1)) +
+  # Format with commas
+  scale_size_continuous(labels = comma) +
+  # Use dark 3
+  scale_color_discrete_qualitative(palette = "Dark 3") +
+  labs(x = "GDP per capita", y = "Life expectancy",
+       color = "Continent", size = "Population",
+       title = "Here's a cool title",
+       subtitle = "And here's a neat subtitle",
+       caption = "Source: The Gapminder Project") +
+  facet_wrap(vars(year))
+
+base_plot
+```
+
+```{r}
+
+```
