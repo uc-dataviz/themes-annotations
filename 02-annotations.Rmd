@@ -23,26 +23,9 @@ library(ggtext) # For fancier text handling
 
 ## Annotations
 
-For this example, we're again going to use cross-national data from the [World Bank's Open Data portal](https://data.worldbank.org/). We'll download the data with the [**WDI** package](https://cran.r-project.org/web/packages/WDI/index.html).
+For this example, we're going to use cross-national data from the [World Bank's Open Data portal](https://data.worldbank.org/).
 
 ### Load data
-
-```{r get-wdi-fake, include = FALSE, eval = FALSE}
-indicators <- c(
-  "SP.POP.TOTL", # Population
-  "EN.ATM.CO2E.PC", # CO2 emissions
-  "NY.GDP.PCAP.KD"
-) # GDP per capita
-
-wdi_co2_raw <- WDI(
-  country = "all", indicators, extra = TRUE,
-  start = 1995, end = 2015
-)
-```
-
-```{r save-wdi, eval = FALSE, include = FALSE}
-write_csv(wdi_co2_raw, here::here("data", "wdi_co2.csv"))
-```
 
 ```{r load-data-wdi-real}
 wdi_co2_raw <- read_csv(here("data", "wdi_co2.csv"))
