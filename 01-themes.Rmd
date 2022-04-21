@@ -44,6 +44,27 @@ base_plot <- ggplot(data = gapminder_filtered,
 base_plot
 ```
 
+- Download and install the [Roboto Condensed](https://fonts.google.com/specimen/Roboto+Condensed) font
+
 ```{r}
 
+```
+
+## Apply it to a different plot
+
+```{r penguins-example}
+library(palmerpenguins)
+
+penguins_example <- ggplot(data = drop_na(penguins, sex), 
+                      mapping = aes(x = bill_length_mm, y = body_mass_g, color = str_to_title(sex))) +
+  geom_point(size = 3) + 
+  scale_color_discrete_qualitative(palette = "Dark 3") +
+  scale_y_continuous(labels = label_comma()) +
+  facet_wrap(vars(species)) +
+  labs(x = "Bill length (mm)", y = "Body mass (g)", color = "Sex",
+       title = "Gentoo penguins are the largest",
+       subtitle = "But females are typically smaller than males",
+       caption = "Here's a caption")
+
+penguins_example
 ```
